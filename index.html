@@ -8,6 +8,9 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.locatecontrol/dist/L.Control.Locate.min.css">
+  <script src="https://unpkg.com/leaflet.locatecontrol/dist/L.Control.Locate.min.js"></script>
+
   <style>
     html, body, #map {
       height: 100%;
@@ -15,6 +18,7 @@
     }
   </style>
 </head>
+
 <body>
 <div id="map"></div>
 
@@ -36,40 +40,31 @@ L.tileLayer('https://kikkipedia.github.io/pokehamn/tiles/{z}/{x}/{y}.png', {
 }).addTo(map);
 
 // GPS tracking
-map.locate({
-  watch: true,
-  enableHighAccuracy: true,
-  maximumAge: 1000,
-  timeout: 10000
-});
-
 let userMarker;
 let userCircle;
-
-map.on('locationfound', (e) => {
-  if (!userMarker) {
-    userMarker = L.marker(e.latlng).addTo(map);
-    userCircle = L.circle(e.latlng, {
-      radius: e.accuracy
-    }).addTo(map);
-  } else {
-    userMarker.setLatLng(e.latlng);
-    userCircle.setLatLng(e.latlng);
-    userCircle.setRadius(e.accuracy);
-  }
-});
-
+let currentPosition = null;
 let followUser = true;
 
-map.on('dragstart', () => {
-  followUser = false;
-});
-
-map.on('locationfound', (e) => {
-  if (followUser) {
-    map.setView(e.latlng);
+L.control.locate({
+  position: 'topright',
+  flyTo: true,
+  keepCurrentZoomLevel: false,
+  initialZoomLevel: 17,
+  clickBehavior: {
+    inView: 'setView',
+    outOfView: 'setView',
+    inViewNotFollowing: 'setView'
+  },
+  locateOptions: {
+    watch: true,
+    enableHighAccuracy: true,
+    maximumAge: 1000,
+    timeout: 10000
+  },
+  strings: {
+    title: 'Show me where I am'
   }
-});
+}).addTo(map);
 
 map.on('locationerror', e => {
   alert('GPS error: ' + e.message);
