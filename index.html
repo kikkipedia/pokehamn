@@ -19,7 +19,7 @@
 <div id="map"></div>
 
 <script>
-const map = L.map('map').setView([57.7089, 11.9746], 15);
+const map = L.map('map').setView([55.68001,12.58980], 14); //copenhagen coordinates
 
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   maxZoom: 19,
@@ -29,27 +29,45 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
 L.tileLayer('https://kikkipedia.github.io/pokehamn/tiles/{z}/{x}/{y}.png', {
   minZoom: 8,
   maxZoom: 18,
-  opacity: 0.75,
-  tms: false
+  opacity: 1,
+  tms: false,
+  updateWhenIdle: true,
+  keepBuffer: 2
 }).addTo(map);
 
 // GPS tracking
 map.locate({
   watch: true,
-  enableHighAccuracy: true
+  enableHighAccuracy: true,
+  maximumAge: 1000,
+  timeout: 10000
 });
 
-let marker, circle;
+let userMarker;
+let userCircle;
 
-map.on('locationfound', e => {
-  if (!marker) {
-    marker = L.marker(e.latlng).addTo(map);
-    circle = L.circle(e.latlng, { radius: e.accuracy }).addTo(map);
-    map.setView(e.latlng, 17);
+map.on('locationfound', (e) => {
+  if (!userMarker) {
+    userMarker = L.marker(e.latlng).addTo(map);
+    userCircle = L.circle(e.latlng, {
+      radius: e.accuracy
+    }).addTo(map);
   } else {
-    marker.setLatLng(e.latlng);
-    circle.setLatLng(e.latlng);
-    circle.setRadius(e.accuracy);
+    userMarker.setLatLng(e.latlng);
+    userCircle.setLatLng(e.latlng);
+    userCircle.setRadius(e.accuracy);
+  }
+});
+
+let followUser = true;
+
+map.on('dragstart', () => {
+  followUser = false;
+});
+
+map.on('locationfound', (e) => {
+  if (followUser) {
+    map.setView(e.latlng);
   }
 });
 
